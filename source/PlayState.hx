@@ -1695,8 +1695,8 @@ class PlayState extends MusicBeatState
 		// FlxG.watch.addQuick('VOL', vocals.amplitudeLeft);
 		// FlxG.watch.addQuick('VOLRight', vocals.amplitudeRight);
 
-		iconP1.setGraphicSize(Std.int(FlxMath.lerp(150, iconP1.width, 0.9))); // smooth as fuck my guy
-		iconP2.setGraphicSize(Std.int(FlxMath.lerp(150, iconP2.width, 0.9)));
+		iconP1.setGraphicSize(Std.int(FlxMath.lerp(150, iconP1.width, 0.95))); // smooth as fuck my guy
+		iconP2.setGraphicSize(Std.int(FlxMath.lerp(150, iconP2.width, 0.95)));
 
 		iconP1.updateHitbox();
 		iconP2.updateHitbox();
@@ -1931,7 +1931,7 @@ class PlayState extends MusicBeatState
 				{
 					if (daNote.tooLate || !daNote.wasGoodHit)
 					{
-						health -= 0.0475;
+						health -= 0.1; // punish these mfs
 						vocals.volume = 0;
 					}
 
@@ -2086,6 +2086,11 @@ class PlayState extends MusicBeatState
 			score = 200;
 			doSplash = false;
 		}
+		else if (noteDiff > Conductor.safeZoneOffset * 0) // tee hee
+			{
+				daRating = 'sick';
+				health += 0.02;
+			}		
 
 		if (PreferencesMenu.getPref('ns'))		
 		if (doSplash)
@@ -2385,7 +2390,7 @@ class PlayState extends MusicBeatState
 	{
 		if (!boyfriend.stunned)
 		{
-			health -= 0.04;
+			health -= 0.1; // Punish these mfs
 			combo = 0;			
 			if (combo > 5 && gf.animOffsets.exists('sad'))
 			{
@@ -2454,10 +2459,10 @@ class PlayState extends MusicBeatState
 				combo += 1;
 			}
 
-			if (note.noteData >= 0)
-				health += 0.023;
-			else
-				health += 0.004;
+			/*if (note.noteData >= 0)
+				health += 0.02;
+			  else
+				health += 0.01;*/
 
 			switch (note.noteData)
 			{
