@@ -301,7 +301,7 @@ class ChartingState extends MusicBeatState
 			}
 		});
 
-		check_mustHitSection = new FlxUICheckBox(10, 30, null, null, "Must hit section", 100);
+		check_mustHitSection = new FlxUICheckBox(10, 30, null, null, "P1 Section", 100);
 		check_mustHitSection.name = 'check_mustHit';
 		check_mustHitSection.checked = true;
 		// _song.needsVoices = check_mustHit.checked;

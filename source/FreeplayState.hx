@@ -31,7 +31,7 @@ class FreeplayState extends MusicBeatState
 	var intendedScore:Int = 0;
 
 	private var grpSongs:FlxTypedGroup<Alphabet>;
-	private var coolColors = [0xFF9271FD, 0xFF9271FD, 0xFF223344, 0xFF941653, 0xFFFC96D7, 0xFFA0D1FF, 0xFFFF78BF, 0xFFF6B604];
+	private var coolColors = [0xFFFFFFFF, 0xFF9271FD, 0xFFFF9900, 0xFF15B400, 0xFF96005F, 0xFF593074, 0xFFFFB96A, 0xFF5E5E5E];
 
 	private var curPlaying:Bool = false;
 

@@ -3,7 +3,9 @@ package ui;
 import openfl.Lib;
 import flixel.FlxG;
 import flixel.FlxObject;
+import flixel.FlxSprite;
 import flixel.FlxCamera;
+import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import haxe.ds.StringMap;
 
@@ -16,22 +18,44 @@ class PreferencesMenu extends Page
 	var items:TextMenuList;
 	var camFollow:FlxObject;
 
-	override public function new() // coolswag
+	var descriptionTxt:FlxText;
+	var descriptionBG:FlxSprite;
+
+	override public function new()
 	{
 		super();
+
 		menuCamera = new FlxCamera();
 		FlxG.cameras.add(menuCamera, false);
 		menuCamera.bgColor = FlxColor.TRANSPARENT;
 		camera = menuCamera;
+
 		add(items = new TextMenuList());
-		createPrefItem('Ghost Tapping', 'gt', true);
-		createPrefItem('downscroll', 'downscroll', false);
-		createPrefItem('Note Splashes', 'ns', true);
-		createPrefItem('Show Combo Counter', 'combo', true);
-		createPrefItem('flashing menu', 'flashing-menu', true);
-		createPrefItem('Camera Zooming on Beat', 'camera-zoom', true);
-		//createPrefItem('FPS Counter', 'fps-counter', true);
-		createPrefItem('Auto Pause', 'auto-pause', false);
+		createPrefItem('naughtyness', 'censor-naughty', 'Censor inappropriate words', true);
+		createPrefItem('show combo counter', 'combo', 'shows combo counter next to the score counter', true);
+		createPrefItem('downscroll', 'downscroll', 'Which direction the notes should go from', false);
+		createPrefItem('ghost tapping', 'gt', 'Give the player a miss penalty for tapping with no hittable notes', true);
+		createPrefItem('flashing lights', 'flashing-lights', 'Prevent flashing lights for photosensitive players', true);
+		createPrefItem('Camera Zooming on Beat', 'camera-zoom', 'If the camera should zoom based on the beat', true);
+		//createPrefItem('Performance Counter', 'fps-counter', 'Should the Performance Counter be visible', true);
+		#if !web // no point of using this option if HTML5 doesn't allow you to pause tabs
+		createPrefItem('Auto Pause', 'auto-pause', 'If the game should pause when you focus out of it', false);
+		#end
+
+		descriptionTxt = new FlxText(0, FlxG.height * 0.85, 0, "", 32);
+		descriptionTxt.setFormat(Paths.defaultFont, 32, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
+		descriptionTxt.borderSize = 2;
+		descriptionTxt.scrollFactor.set();
+		descriptionTxt.text = items.members[items.selectedIndex].description;
+
+		descriptionBG = new FlxSprite(0, FlxG.height * 0.85).makeGraphic(Math.floor(descriptionTxt.width + 16), Math.floor(descriptionTxt.height + 8), 0xFF000000);
+		descriptionBG.alpha = 0.4;
+		descriptionBG.scrollFactor.set();
+		descriptionBG.y = descriptionTxt.y - 4;
+		descriptionBG.screenCenter(X);
+		add(descriptionBG);
+		add(descriptionTxt);
+
 		camFollow = new FlxObject(FlxG.width / 2, 0, 140, 70);
 		if (items != null)
 		{
@@ -44,6 +68,9 @@ class PreferencesMenu extends Page
 		{
 			camFollow.y = item.y;
 		});
+		menuCamera.maxScrollY = items.members[items.length - 1].y + items.members[items.length - 1].height + 16;
+
+		onExit.add(Settings.save);
 	}
 
 	public static function getPref(pref:String)
@@ -53,36 +80,31 @@ class PreferencesMenu extends Page
 
 	public static function initPrefs()
 	{
-		preferenceCheck('gt', true);
-		preferenceCheck('downscroll', false);
-		preferenceCheck('ns', true);
+		preferenceCheck('censor-naughty', true);
 		preferenceCheck('combo', true);
-		preferenceCheck('flashing-menu', true);
+		preferenceCheck('downscroll', false);
+		preferenceCheck('gt', false);
+		preferenceCheck('flashing-lights', true);
 		preferenceCheck('camera-zoom', true);
 		preferenceCheck('fps-counter', true);
 		preferenceCheck('auto-pause', false);
 		preferenceCheck('master-volume', 1);
+
 		if (!getPref('fps-counter'))
 		{
 			Lib.current.stage.removeChild(Main.fpsCounter);
 		}
 		FlxG.autoPause = getPref('auto-pause');
+		Settings.init();
 	}
 
 	public static function preferenceCheck(identifier:String, defaultValue:Dynamic)
 	{
 		if (preferences.get(identifier) == null)
-		{
 			preferences.set(identifier, defaultValue);
-			trace('set preference!');
-		}
-		else
-		{
-			trace('found preference: ' + Std.string(preferences.get(identifier)));
-		}
 	}
 
-	public function createPrefItem(label:String, identifier:String, value:Dynamic)
+	public function createPrefItem(label:String, identifier:String, description:String, value:Dynamic)
 	{
 		items.createItem(120, 120 * items.length + 30, label, Bold, function()
 		{
@@ -96,15 +118,11 @@ class PreferencesMenu extends Page
 				trace('swag');
 			}
 		});
+		items.members[items.length - 1].description = description;
 		if (Type.typeof(value) == TBool)
 		{
 			createCheckbox(identifier);
 		}
-		else
-		{
-			trace('swag');
-		}
-		trace(Type.typeof(value));
 	}
 
 	public function createCheckbox(identifier:String)
@@ -136,7 +154,7 @@ class PreferencesMenu extends Page
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
-		menuCamera.followLerp = CoolUtil.camLerpShit(0.05);
+		menuCamera.followLerp = CoolUtil.camLerpShit(0.05, FlxG.updateFramerate);
 		items.forEach(function(item:MenuItem)
 		{
 			if (item == items.members[items.selectedIndex])
@@ -144,5 +162,27 @@ class PreferencesMenu extends Page
 			else
 				item.x = 120;
 		});
+		changeDescTxt(items.members[items.selectedIndex].description);
+
+		descriptionTxt.screenCenter(X);
+
+		descriptionBG.setPosition(
+			CoolUtil.coolLerp(descriptionBG.x, descriptionTxt.x - 8, elapsed * 10.65), 
+			CoolUtil.coolLerp(descriptionBG.y, descriptionTxt.y - 4, elapsed * 10.65)
+		);
+		descriptionBG.setGraphicSize(
+			Math.floor(CoolUtil.coolLerp(descriptionBG.width, descriptionTxt.width + 16, elapsed * 10.65)), 
+			Math.floor(CoolUtil.coolLerp(descriptionBG.height, descriptionTxt.height + 8, elapsed * 10.65))
+		);
+		descriptionBG.updateHitbox();
+		descriptionBG.x = descriptionTxt.getGraphicMidpoint().x - (descriptionBG.width / 2);
+	}
+
+	function changeDescTxt(text:String)
+	{
+		descriptionTxt.fieldWidth = 0;
+		descriptionTxt.text = text;
+		descriptionTxt.fieldWidth = Math.min(descriptionTxt.width, FlxG.width / 1.5);
+		descriptionTxt.updateHitbox();
 	}
 }

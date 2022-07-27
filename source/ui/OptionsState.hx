@@ -6,6 +6,7 @@ import haxe.ds.EnumValueMap;
 
 class OptionsState extends MusicBeatState
 {
+	public static var fromPlayState:Bool = false;
 	public var pages:EnumValueMap<PageName, Page> = new EnumValueMap();
 	public var currentName:PageName = Options;
 	public var currentPage(get, never):Page;
@@ -22,24 +23,25 @@ class OptionsState extends MusicBeatState
 		bg.screenCenter();
 		bg.scrollFactor.set(0, 0);
 		add(bg);
-		var optionsmenu:OptionsMenu = addPage(Options, new OptionsMenu(false));
-		var preferencesmenu:PreferencesMenu = addPage(Preferences, new PreferencesMenu());
-		var controlsmenu:ControlsMenu = addPage(Controls, new ControlsMenu());
-		if (optionsmenu.hasMultipleOptions())
+		var optionsMenu:OptionsMenu = addPage(Options, new OptionsMenu(false));
+		var preferencesMenu:PreferencesMenu = addPage(Preferences, new PreferencesMenu());
+		var controlsMenu:ControlsMenu = addPage(Controls, new ControlsMenu());
+		var categoryMenu:PreferencesCategory = addPage(Category, new PreferencesCategory());
+		if (optionsMenu.hasMultipleOptions())
 		{
-			optionsmenu.onExit.add(exitToMainMenu);
-			controlsmenu.onExit.add(function()
+			optionsMenu.onExit.add(exitToMainMenu);
+			controlsMenu.onExit.add(function()
 			{
 				switchPage(Options);
 			});
-			preferencesmenu.onExit.add(function()
+			preferencesMenu.onExit.add(function()
 			{
 				switchPage(Options);
 			});
 		}
 		else
 		{
-			controlsmenu.onExit.add(exitToMainMenu);
+			controlsMenu.onExit.add(exitToMainMenu);
 			setPage(Controls);
 		}
 		currentPage.enabled = false;
@@ -82,6 +84,10 @@ class OptionsState extends MusicBeatState
 	function exitToMainMenu()
 	{
 		currentPage.enabled = false;
-		FlxG.switchState(new MainMenuState());
+		if (fromPlayState)
+			FlxG.switchState(new PlayState());
+		else
+			FlxG.switchState(new MainMenuState());
+		fromPlayState = false;
 	}
 }

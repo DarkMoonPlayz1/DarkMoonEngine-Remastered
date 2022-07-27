@@ -60,6 +60,8 @@ class PlayState extends MusicBeatState
 	public static var practiceMode:Bool = false;
 	public static var seenCutscene:Bool = false;
 
+	public static var current:PlayState;
+
 	var halloweenLevel:Bool = false;
 
 	private var vocals:FlxSound;
@@ -90,6 +92,10 @@ class PlayState extends MusicBeatState
 
 	private var gfSpeed:Int = 1;
 	private var health:Float = 1;
+	private var misses:Int = 0;
+	private var accuracy:Float = 0.00;
+	private var totalNotesHit:Float = 0;
+	private var totalPlayed:Int = 0;
 	private var combo:Int = 0;
 
 	private var healthBarBG:FlxSprite;
@@ -134,9 +140,13 @@ class PlayState extends MusicBeatState
 	var bfTankCutsceneLayer:FlxTypedGroup<FlxAnimate>;
 
 	var talking:Bool = true;
-	var songScore:Int = 0;
-	var songMisses:Int = 0; //bussin
 	var scoreTxt:FlxText;
+	var scoreBG:FlxSprite;
+
+	private var songScore:Int = 0;
+	private var songMisses:Int = 0;
+	private var songAccuracy:Float = 0.0;
+	private var totalHits:Int = 0;
 
 	public static var campaignScore:Int = 0;
 
@@ -881,9 +891,14 @@ class PlayState extends MusicBeatState
 		// healthBar
 		add(healthBar);
 
-		scoreTxt = new FlxText(healthBarBG.x + healthBarBG.width - 190, healthBarBG.y + 30, 0, "", 20);
+		scoreTxt = new FlxText(healthBarBG.x + healthBarBG.width - 500, healthBarBG.y + 30, 0, "", 20);
 		scoreTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 		scoreTxt.scrollFactor.set();
+
+		scoreBG = new FlxSprite(scoreTxt.x - 4, scoreTxt.y - 4).makeGraphic(Math.floor(scoreTxt.width + 8), Math.floor(scoreTxt.height + 8), 0xFF000000);
+		scoreBG.alpha = 0.4;
+		scoreBG.scrollFactor.set();
+		add(scoreBG);		
 		add(scoreTxt);
 
 		iconP1 = new HealthIcon(SONG.player1, true);
@@ -902,6 +917,7 @@ class PlayState extends MusicBeatState
 		iconP1.cameras = [camHUD];
 		iconP2.cameras = [camHUD];
 		scoreTxt.cameras = [camHUD];
+		scoreBG.cameras = [camHUD];
 		doof.cameras = [camHUD];
 
 		// if (SONG.song == 'South')
@@ -1025,12 +1041,19 @@ class PlayState extends MusicBeatState
 
 	function initDiscord()
 	{
-		// Angel here.
-		// I have no idea what this function does.
-		// The function is still in the compiled code, but everything inside was ommited since it was compiled for the HTML target.
-		// Just leaving this here in case I ever figure out what it was used for.
-		// If I never find a use for this, sorry, but this is just staying here cause it's a part of v0.2.8's code lol.
+
 	}
+
+	function updateAccuracy()
+		{
+	
+			totalPlayed += 1;
+			accuracy = totalNotesHit / totalPlayed * 100;
+			if (accuracy >= 100){
+				accuracy = 100;
+			}
+			
+		}
 
 	function schoolIntro(?dialogueBox:DialogueBox):Void
 	{
@@ -1658,6 +1681,16 @@ class PlayState extends MusicBeatState
 				scoreTxt.text = "Score:" + songScore + " Combo:" + combo; // so much win
 			}
 
+		var accuracyAdds:Float = songAccuracy / (totalHits + songMisses);
+			if (Math.isNaN(accuracyAdds))
+				accuracyAdds = 0;
+			else
+				accuracyAdds = FlxMath.roundDecimal(accuracyAdds * 100, 2);
+			scoreTxt.text = "Score: " + songScore + " -" + " Misses: " + songMisses + " -" + " Combo:" + combo + " -" +' Accuracy: ${CoolUtil.formatAccuracy(accuracyAdds)}%'; // I shouldn' be doing this because this looks mess af but whatever.
+			scoreBG.setPosition(scoreTxt.x - 2, scoreTxt.y - 4);
+			scoreBG.setGraphicSize(Math.floor(scoreTxt.width + 8), Math.floor(scoreTxt.height + 8));
+			scoreBG.updateHitbox();
+
 		if (controls.PAUSE && startedCountdown && canPause)
 		{
 			persistentUpdate = false;
@@ -1931,6 +1964,7 @@ class PlayState extends MusicBeatState
 				{
 					if (daNote.tooLate || !daNote.wasGoodHit)
 					{
+						songMisses++;
 						health -= 0.1; // punish these mfs
 						vocals.volume = 0;
 					}
@@ -1955,48 +1989,48 @@ class PlayState extends MusicBeatState
 	}
 
 	function endSong():Void
-	{
-		seenCutscene = false;
-		deathCounter = 0;
-		canPause = false;
-		FlxG.sound.music.volume = 0;
-		vocals.volume = 0;
-		if (SONG.validScore)
 		{
-			#if !switch
-			Highscore.saveScore(SONG.song, songScore, storyDifficulty);
-			#end
-		}
-
-		if (isStoryMode)
-		{
-			campaignScore += songScore;
-
-			storyPlaylist.remove(storyPlaylist[0]);
-
-			if (storyPlaylist.length <= 0)
+			seenCutscene = false;
+			deathCounter = 0;
+			canPause = false;
+			FlxG.sound.music.volume = 0;
+			vocals.volume = 0;
+			if (SONG.validScore)
 			{
-				FlxG.sound.playMusic(Paths.music('freakyMenu'));
-
-				transIn = FlxTransitionableState.defaultTransIn;
-				transOut = FlxTransitionableState.defaultTransOut;
-
-				if (storyWeek == 7)
-					FlxG.switchState(new VideoState());
-				else
-					FlxG.switchState(new StoryMenuState());
-
-				// if ()
-				StoryMenuState.weekUnlocked[Std.int(Math.min(storyWeek + 1, StoryMenuState.weekUnlocked.length - 1))] = true;
-
-				if (SONG.validScore)
-				{
-					Highscore.saveWeekScore(storyWeek, campaignScore, storyDifficulty);
-				}
-
-				FlxG.save.data.weekUnlocked = StoryMenuState.weekUnlocked;
-				FlxG.save.flush();
+				#if !switch
+				Highscore.saveScore(SONG.song, songScore, storyDifficulty);
+				#end
 			}
+	
+			if (isStoryMode)
+			{
+				campaignScore += songScore;
+	
+				storyPlaylist.remove(storyPlaylist[0]);
+	
+				if (storyPlaylist.length <= 0)
+				{
+					FlxG.sound.playMusic(Paths.music('freakyMenu'));
+	
+					transIn = FlxTransitionableState.defaultTransIn;
+					transOut = FlxTransitionableState.defaultTransOut;
+	
+					if (storyWeek == 7)
+						FlxG.switchState(new VideoState());
+					else
+						FlxG.switchState(new StoryMenuState());
+	
+					// if ()
+					StoryMenuState.weekUnlocked[Std.int(Math.min(storyWeek + 1, StoryMenuState.weekUnlocked.length - 1))] = true;
+	
+					if (SONG.validScore)
+					{
+						Highscore.saveWeekScore(storyWeek, campaignScore, storyDifficulty);
+					}
+	
+					FlxG.save.data.weekUnlocked = StoryMenuState.weekUnlocked;
+					FlxG.save.flush();
+				}
 			else
 			{
 				var difficulty:String = "";
@@ -2065,6 +2099,7 @@ class PlayState extends MusicBeatState
 		var rating:FlxSprite = new FlxSprite();
 		var score:Int = 350;
 
+		var addedAccuracy:Float = 1;
 		var daRating:String = "sick";
 		var doSplash:Bool = true;
 
@@ -2072,33 +2107,39 @@ class PlayState extends MusicBeatState
 		{
 			daRating = 'shit';
 			score = 50;
+			addedAccuracy -= 0.25;
 			doSplash = false;
 		}
 		else if (noteDiff > Conductor.safeZoneOffset * 0.75)
 		{
 			daRating = 'bad';
 			score = 100;
+			addedAccuracy -= 0.50;
 			doSplash = false;
 		}
 		else if (noteDiff > Conductor.safeZoneOffset * 0.2)
 		{
 			daRating = 'good';
 			score = 200;
+			addedAccuracy = 0.75;
 			doSplash = false;
 		}
 		else if (noteDiff > Conductor.safeZoneOffset * 0) // tee hee
 			{
 				daRating = 'sick';
 				health += 0.02;
+				addedAccuracy = 1;
 			}		
-
-		if (PreferencesMenu.getPref('ns'))		
+	
 		if (doSplash)
 		{
 			var splash:NoteSplash = grpNoteSplashes.recycle(NoteSplash);
 			splash.setupNoteSplash(daNote.x, daNote.y, daNote.noteData);
 			grpNoteSplashes.add(splash);
 		}
+
+		songAccuracy += addedAccuracy;
+		totalHits += 1;
 
 		if (!practiceMode)
 			songScore += score;
@@ -2400,6 +2441,8 @@ class PlayState extends MusicBeatState
 
 			if (!practiceMode)
 				songScore -= 10;
+
+			songMisses++;
 
 			FlxG.sound.play(Paths.soundRandom('missnote', 1, 3), FlxG.random.float(0.1, 0.2));
 			// FlxG.sound.play(Paths.sound('missnote1'), 1, false);
