@@ -891,7 +891,7 @@ class PlayState extends MusicBeatState
 		// healthBar
 		add(healthBar);
 
-		scoreTxt = new FlxText(healthBarBG.x + healthBarBG.width - 500, healthBarBG.y + 30, 0, "", 20);
+		scoreTxt = new FlxText(healthBarBG.x + healthBarBG.width - 490, healthBarBG.y + 30, 0, "", 20);
 		scoreTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 		scoreTxt.scrollFactor.set();
 
@@ -1676,17 +1676,25 @@ class PlayState extends MusicBeatState
 
 		scoreTxt.text = "Score:" + songScore;
 
-		if (PreferencesMenu.getPref('combo'))
+	/*	if (PreferencesMenu.getPref('combo'))
 			{
-				scoreTxt.text = "Score:" + songScore + " Combo:" + combo; // so much win
-			}
+				var accuracyAdds:Float = songAccuracy / (totalHits + songMisses);
+				if (Math.isNaN(accuracyAdds))
+					accuracyAdds = 0;
+				else
+					accuracyAdds = FlxMath.roundDecimal(accuracyAdds * 100, 2);
+				scoreTxt.text = "Score: " + songScore + " -" + " Misses: " + songMisses + " -" + " Combo:" + combo + " -" +' Accuracy: ${CoolUtil.formatAccuracy(accuracyAdds)}%'; // so much win
+				scoreBG.setPosition(scoreTxt.x - 2, scoreTxt.y - 4);
+				scoreBG.setGraphicSize(Math.floor(scoreTxt.width + 8), Math.floor(scoreTxt.height + 8));
+				scoreBG.updateHitbox();
+			}*/
 
 		var accuracyAdds:Float = songAccuracy / (totalHits + songMisses);
 			if (Math.isNaN(accuracyAdds))
 				accuracyAdds = 0;
 			else
 				accuracyAdds = FlxMath.roundDecimal(accuracyAdds * 100, 2);
-			scoreTxt.text = "Score: " + songScore + " -" + " Misses: " + songMisses + " -" + " Combo:" + combo + " -" +' Accuracy: ${CoolUtil.formatAccuracy(accuracyAdds)}%'; // I shouldn' be doing this because this looks mess af but whatever.
+			scoreTxt.text = "Score: " + songScore + " -" + " Misses: " + songMisses + " -"  + ' Accuracy: ${CoolUtil.formatAccuracy(accuracyAdds)}%'; // I shouldn' be doing this because this looks mess af but whatever.
 			scoreBG.setPosition(scoreTxt.x - 2, scoreTxt.y - 4);
 			scoreBG.setGraphicSize(Math.floor(scoreTxt.width + 8), Math.floor(scoreTxt.height + 8));
 			scoreBG.updateHitbox();

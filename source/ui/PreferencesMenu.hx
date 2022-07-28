@@ -32,7 +32,7 @@ class PreferencesMenu extends Page
 
 		add(items = new TextMenuList());
 		createPrefItem('naughtyness', 'censor-naughty', 'Censor inappropriate words', true);
-		createPrefItem('show combo counter', 'combo', 'shows combo counter next to the score counter', true);
+		//createPrefItem('show combo counter', 'combo', 'shows combo counter next to the score counter', true);
 		createPrefItem('downscroll', 'downscroll', 'Which direction the notes should go from', false);
 		createPrefItem('ghost tapping', 'gt', 'Give the player a miss penalty for tapping with no hittable notes', true);
 		createPrefItem('flashing lights', 'flashing-lights', 'Prevent flashing lights for photosensitive players', true);
@@ -81,7 +81,7 @@ class PreferencesMenu extends Page
 	public static function initPrefs()
 	{
 		preferenceCheck('censor-naughty', true);
-		preferenceCheck('combo', true);
+		//preferenceCheck('combo', true);
 		preferenceCheck('downscroll', false);
 		preferenceCheck('gt', false);
 		preferenceCheck('flashing-lights', true);
